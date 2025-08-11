@@ -1,21 +1,84 @@
 {
-  "name": "jirehgrp-cli",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "jirehgrp",
+  "version": "0.0.1",
+  "description": "Scaffold frontend apps from Jireh templates (Next.js, React+Vite, Vanilla, etc.)",
+  "bin": {
+    "jirehgrp": "dist/index.js"
   },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "tree": "ts-node test-tree.ts"
+  },
+  "keywords": [
+    "amharic",
+    "english",
+    "multilingual",
+    "scaffold",
+    "cli",
+    "cli-tool",
+    "frontend",
+    "starter",
+    "starter-template",
+    "boilerplate",
+    "templates",
+    "vite",
+    "nextjs",
+    "react",
+    "vue",
+    "vue3",
+    "svelte",
+    "sveltekit",
+    "vanilla",
+    "typescript",
+    "javascript",
+    "theme",
+    "dark mode",
+    "light mode",
+    "package manager",
+    "git",
+    "degit",
+    "project generator",
+    "tree"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jirehgrp-org/jirehgrp-cli.git"
+    "url": "https://github.com/jirehgrp-org/jirehgrp-cli.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/jirehgrp-org/jirehgrp-cli/issues"
   },
-  "homepage": "https://github.com/jirehgrp-org/jirehgrp-cli#readme"
+  "homepage": "https://github.com/jirehgrp-org/jirehgrp-cli#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "preferGlobal": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "degit": "^2.8.4",
+    "execa": "^9.3.0",
+    "kleur": "^4.1.5",
+    "minimist": "^1.2.8",
+    "ora": "^8.0.1",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/degit": "^2.8.6",
+    "@types/minimatch": "^5.1.2",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^24.2.1",
+    "@types/prompts": "^2.4.9",
+    "standard-version": "^9.5.0",
+    "typescript": "^5.5.0"
+  }
 }
