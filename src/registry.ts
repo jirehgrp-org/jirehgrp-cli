@@ -17,37 +17,37 @@ export type Registry = Record<
 export const registry: Registry = {
   "nextjs": {
     label: "Next.js (TS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/nextjs"
   },
   "react-vite/js": {
     label: "React + Vite (JS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/react-vite/js"
   },
   "react-vite/ts": {
     label: "React + Vite (TS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/react-vite/ts"
   },
   "vanilla/js": {
     label: "Vanilla (JS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/vanilla/js"
   },
   "vanilla/ts": {
     label: "Vanilla (TS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/vanilla/ts"
   },
   "vanilla-vite/js": {
     label: "Vanilla + Vite (JS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/vanilla/vite/js"
   },
   "vanilla-vite/ts": {
     label: "Vanilla + Vite (TS)",
-    repo: "jirehgrp-org/jirehgrp-templates#v1.0.0",
+    repo: "jirehgrp-org/jirehgrp-templates",
     subdir: "templates/vanilla/vite/ts"
   }
 };

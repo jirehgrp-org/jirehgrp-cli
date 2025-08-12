@@ -10,7 +10,7 @@ import { ask } from "./prompts.js";
 import { registry } from "./registry.js";
 import { copyTemplate } from "./fetchTemplate.js";
 import { finalizeProject } from "./postInstall.js";
-import { buildTreeString, writeTreeToFile } from "./tree.js"
+import { buildTreeString } from "./tree.js"
 
 const argv = minimist(process.argv.slice(2), {
   string: ["template", "name", "tag", "dir", "pm"],
@@ -29,13 +29,6 @@ function getProjectName(dir: string): string {
     // ignore error and fallback below
   }
   return path.basename(dir);
-}
-
-function prefixTreeWithRootName(treeStr: string, rootName: string): string {
-  const indent = '│   ';
-  const lines = treeStr.split('\n').filter(Boolean);
-  const indentedLines = lines.map(line => indent + line);
-  return `${rootName}/\n${indentedLines.join('\n')}\n`;
 }
 
 (async () => {
