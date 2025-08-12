@@ -5,6 +5,7 @@ import path from "node:path";
 import fs from "node:fs";
 import minimist from "minimist";
 import kleur from "kleur";
+import prompts from "prompts";
 import ora from "ora";
 import { ask } from "./prompts.js";
 import { registry } from "./registry.js";
@@ -29,6 +30,59 @@ function getProjectName(dir: string): string {
     // ignore error and fallback below
   }
   return path.basename(dir);
+}
+
+async function handleDirConflict(dir: string): Promise<string | null> {
+  if (!fs.existsSync(dir)) return dir;
+  if (fs.readdirSync(dir).length === 0) return dir;
+
+  const response = await prompts({
+    type: "select",
+    name: "action",
+    message: `Target directory '${dir}' exists and is not empty. What do you want to do?`,
+    choices: [
+      { title: "Overwrite existing folder", value: "overwrite" },
+      { title: "Rename new project folder", value: "rename" },
+      { title: "Backup existing folder", value: "backup" },
+      { title: "Cancel", value: "cancel" },
+    ],
+  });
+
+  switch (response.action) {
+    case "overwrite":
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.mkdirSync(dir, { recursive: true });
+      return dir;
+
+    case "rename": {
+      const renameRes = await prompts({
+        type: "text",
+        name: "newName",
+        message: "Enter new folder name:",
+        initial: dir + "-new",
+      });
+      if (!renameRes.newName) return null;
+      const newDir = path.resolve(process.cwd(), renameRes.newName);
+      if (fs.existsSync(newDir)) {
+        console.error(kleur.red(`Folder '${newDir}' already exists. Aborting.`));
+        return null;
+      }
+      return newDir;
+    }
+
+    case "backup": {
+      const backupName = dir + "-" + new Date().toISOString().replace(/[:.]/g, "-") + "-backup";
+      fs.renameSync(dir, backupName);
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(kleur.green(`Backed up existing folder to '${backupName}'.`));
+      return dir;
+    }
+
+    case "cancel":
+    default:
+      console.log(kleur.yellow("Operation cancelled by user."));
+      return null;
+  }
 }
 
 (async () => {
@@ -74,25 +128,26 @@ function getProjectName(dir: string): string {
 
   const dest = path.resolve(process.cwd(), argv.dir ?? answers.name);
 
-  if (fs.existsSync(dest) && fs.readdirSync(dest).length > 0) {
+  let targetDir = dest;
+  if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
     if (!argv.yes) {
-      console.error(kleur.red(`\nError: Target directory '${dest}' is not empty.`));
-      console.log(
-        kleur.yellow(
-          `\nTip: Re-run with ${kleur.bold("--yes")} to overwrite, or choose an empty folder.\n`
-        )
-      );
-      process.exit(1);
+      const resolvedDir = await handleDirConflict(targetDir);
+      if (!resolvedDir) process.exit(1);
+      targetDir = resolvedDir;
+    } else {
+      fs.rmSync(targetDir, { recursive: true, force: true });
+      fs.mkdirSync(targetDir, { recursive: true });
     }
+  } else {
+    fs.mkdirSync(targetDir, { recursive: true });
   }
-  fs.mkdirSync(dest, { recursive: true });
 
   const entry = registry[answers.subTemplateKey];
   const repoRef = argv.tag ? `${entry.repo.split("#")[0]}#${argv.tag}` : entry.repo;
 
   const spin = ora(`Fetching ${entry.label} ...`).start();
   try {
-    await copyTemplate(repoRef, entry.subdir, dest);
+    await copyTemplate(repoRef, entry.subdir, targetDir);
     spin.succeed("Template copied");
   } catch (e) {
     spin.fail("Failed to fetch template");
@@ -100,19 +155,17 @@ function getProjectName(dir: string): string {
     process.exit(1);
   }
 
-  const hasPackageJson = fs.existsSync(path.join(dest, "package.json"));
-
-  await finalizeProject(dest, answers.name, {
-    install: hasPackageJson ? !!answers.install : false,
+  await finalizeProject(targetDir, answers.name, {
+    install: fs.existsSync(path.join(targetDir, "package.json")) ? !!answers.install : false,
     git: !!answers.git,
-    pm: (argv.pm as "npm" | "yarn" | "pnpm" | "bun" | undefined),
+    pm: argv.pm as "npm" | "yarn" | "pnpm" | "bun" | undefined,
   });
 
-  console.log(`\n${kleur.bold("Done!")} Created ${kleur.cyan(answers.name)} at ${kleur.gray(dest)}\n`);
+  console.log(`\n${kleur.bold("Done!")} Created ${kleur.cyan(answers.name)} at ${kleur.gray(targetDir)}\n`);
   console.log(kleur.bold("Next steps:"));
   console.log(`  cd ${answers.name}`);
 
-  if (hasPackageJson) {
+  if (fs.existsSync(path.join(targetDir, "package.json"))) {
     const pm = (argv.pm || "npm") as "npm" | "yarn" | "pnpm" | "bun";
     const commands: Record<typeof pm, [string, string]> = {
       npm: ["npm install", "npm run dev"],
