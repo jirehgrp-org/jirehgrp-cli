@@ -66,9 +66,10 @@ function getProjectName(dir: string): string {
 
   const answers = await ask({
     name: argv.name,
-    templateKey: argv.template as any,
     install: argv.install,
     git: argv.git,
+    mainTemplateKey: argv.template,
+    subTemplateKey: argv.template,
   });
 
   const dest = path.resolve(process.cwd(), argv.dir ?? answers.name);
@@ -86,7 +87,7 @@ function getProjectName(dir: string): string {
   }
   fs.mkdirSync(dest, { recursive: true });
 
-  const entry = registry[answers.templateKey];
+  const entry = registry[answers.subTemplateKey];
   const repoRef = argv.tag ? `${entry.repo.split("#")[0]}#${argv.tag}` : entry.repo;
 
   const spin = ora(`Fetching ${entry.label} ...`).start();

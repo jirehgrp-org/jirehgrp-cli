@@ -16,6 +16,11 @@
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
+    "release:alpha": "standard-version --prerelease alpha",
+    "release:beta": "standard-version --prerelease beta",
+    "release:rc": "standard-version --prerelease rc",
+    "release:canary": "standard-version --prerelease canary",
+    "release:nightly": "standard-version --prerelease nightly",
     "tree": "ts-node test-tree.ts"
   },
   "keywords": [

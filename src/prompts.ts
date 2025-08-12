@@ -1,34 +1,68 @@
 // src/prompts.ts
 
 import prompts from "prompts";
-import { registry } from "./registry.js";
+import kleur from "kleur";
+import { groupedTemplates } from "./registry.js";
 
 export type Answers = {
   name: string;
-  templateKey: keyof typeof registry;
+  mainTemplateKey: string;
+  subTemplateKey: string;
   install: boolean;
   git: boolean;
 };
 
 export async function ask(opts: Partial<Answers>): Promise<Answers> {
-  const templateChoices = Object.entries(registry).map(([key, v]) => ({
-    title: v.label,
-    value: key
+  const mainChoices = Object.entries(groupedTemplates).map(([key, group]) => ({
+    title: group.label,
+    value: key,
   }));
 
-  const res = await prompts(
+  const mainRes = await prompts({
+    name: "mainTemplateKey",
+    type: opts.mainTemplateKey ? null : "select",
+    message: "Select a template:",
+    choices: mainChoices,
+  });
+
+  if (!mainRes.mainTemplateKey) process.exit(1);
+
+  console.log();
+  console.log(kleur.dim(`— ${groupedTemplates[mainRes.mainTemplateKey].description ?? ""}\n`));
+
+  const group = groupedTemplates[mainRes.mainTemplateKey];
+  let subTemplateKey = opts.subTemplateKey;
+
+  if (Object.keys(group.children).length > 1) {
+    const subChoices = Object.entries(group.children).map(([key, tpl]) => ({
+      title: tpl.label,
+      value: key,
+    }));
+
+    const subRes = await prompts({
+      name: "subTemplateKey",
+      type: subTemplateKey ? null : "select",
+      message: `Select ${group.label} variant:`,
+      choices: subChoices,
+    });
+
+    if (!subRes.subTemplateKey) process.exit(1);
+    subTemplateKey = subRes.subTemplateKey;
+  } else {
+    subTemplateKey = Object.keys(group.children)[0];
+  }
+
+  if (!subTemplateKey) {
+    throw new Error("subTemplateKey must be defined");
+  }
+
+  const restRes = await prompts(
     [
       {
         name: "name",
         type: opts.name ? null : "text",
         message: "Project name:",
-        initial: "my-app"
-      },
-      {
-        name: "templateKey",
-        type: opts.templateKey ? null : "select",
-        message: "Select a template:",
-        choices: templateChoices
+        initial: "my-app",
       },
       {
         name: "install",
@@ -36,7 +70,7 @@ export async function ask(opts: Partial<Answers>): Promise<Answers> {
         message: "Install dependencies?",
         active: "yes",
         inactive: "no",
-        initial: true
+        initial: true,
       },
       {
         name: "git",
@@ -44,11 +78,16 @@ export async function ask(opts: Partial<Answers>): Promise<Answers> {
         message: "Initialize git?",
         active: "yes",
         inactive: "no",
-        initial: true
-      }
+        initial: true,
+      },
     ],
     { onCancel: () => process.exit(1) }
   );
 
-  return { ...opts, ...res } as Answers;
+  return {
+    ...opts,
+    ...restRes,
+    mainTemplateKey: mainRes.mainTemplateKey,
+    subTemplateKey,
+  };
 }
