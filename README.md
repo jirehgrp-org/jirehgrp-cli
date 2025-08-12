@@ -165,7 +165,7 @@ The CLI detects or allows you to choose a package manager and prints the **corre
 
 Thank you to everyone who has downloaded and tried **jirehgrp** so far! 🚀
 
-We’re excited to see 135+ weekly downloads just days after launch — your support means a lot and motivates us to keep improving.
+We’re excited to see 60+ weekly downloads just days after launch — your support means a lot and motivates us to keep improving.
 
 If you have any feedback, issues, or feature requests, please open an issue or contribute on GitHub. We love hearing from you!
 
