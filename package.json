@@ -1,6 +1,6 @@
 {
   "name": "jirehgrp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Scaffold frontend apps from Jireh templates (Next.js, React+Vite, Vanilla, etc.)",
   "bin": {
     "jirehgrp": "dist/index.js"
