@@ -41,12 +41,12 @@ export const groupedTemplates: Record<string, GroupedTemplates> = {
     children: {
       "react-vite/js": {
         label: "React + Vite (JavaScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/react-vite/js",
       },
       "react-vite/ts": {
         label: "React + Vite (TypeScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/react-vite/ts",
       }
     }
@@ -57,12 +57,12 @@ export const groupedTemplates: Record<string, GroupedTemplates> = {
     children: {
       "vanilla/js": {
         label: "Vanilla (JavaScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/vanilla/js",
       },
       "vanilla/ts": {
         label: "Vanilla (TypeScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/vanilla/ts",
       }
     }
@@ -73,12 +73,12 @@ export const groupedTemplates: Record<string, GroupedTemplates> = {
     children: {
       "vanilla-vite/js": {
         label: "Vanilla + Vite (JavaScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/vanilla/vite/js",
       },
       "vanilla-vite/ts": {
         label: "Vanilla + Vite (TypeScript)",
-        repo: "jirehgrp-org/jirehgrp-templates",
+        repo: "jirehgrp-org/jirehgrp-templates/",
         subdir: "templates/vanilla/vite/ts",
       }
     }
@@ -91,3 +91,4 @@ export const registry: Record<string, TemplateEntry> = Object.values(groupedTemp
     acc[key] = value;
     return acc;
   }, {} as Record<string, TemplateEntry>);
+  

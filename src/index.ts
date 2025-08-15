@@ -9,14 +9,15 @@ import prompts from "prompts";
 import ora from "ora";
 import { ask } from "./prompts.js";
 import { registry } from "./registry.js";
+import { buildTreeString, writeTreeToFile } from "./tree.js"
 import { copyTemplate } from "./fetchTemplate.js";
 import { finalizeProject } from "./postInstall.js";
-import { buildTreeString } from "./tree.js"
+import { writeReadme } from "./writeReadme.js";
 
 const argv = minimist(process.argv.slice(2), {
   string: ["template", "name", "tag", "dir", "pm"],
-  boolean: ["install", "git", "yes", "tree"],
-  default: { install: undefined, git: undefined, tree: false },
+  boolean: ["install", "git", "yes", "tree", "readme"],
+  default: { install: undefined, git: undefined, tree: false, readme: false },
 });
 
 function getProjectName(dir: string): string {
@@ -89,34 +90,63 @@ async function handleDirConflict(dir: string): Promise<string | null> {
   if (argv.tree) {
     const dirToPrint = path.resolve(process.cwd(), argv.dir || ".");
     const rootName = getProjectName(dirToPrint);
-    const fullTreeColored = buildTreeString(dirToPrint, '', { color: true });
+    const fullTreeColored = buildTreeString(dirToPrint, "", { color: true });
 
-    console.log(kleur.bold(`\nProject structure for: ${dirToPrint}`));
-    console.log(kleur.bold(`Generating project structure for: ${dirToPrint}\n`));
-
+    console.log(kleur.bold(`\nProject structure for: ${dirToPrint}\n`));
     const treeWithRoot = `${rootName}/\n${fullTreeColored}`;
-    const treeLines = treeWithRoot.trim().split('\n');
+    const treeLines = treeWithRoot.trim().split("\n");
     const snippetLimit = 30;
     if (treeLines.length > snippetLimit) {
-      console.log(treeLines.slice(0, snippetLimit).join('\n'));
+      console.log(treeLines.slice(0, snippetLimit).join("\n"));
       console.log(kleur.gray(`\n...snipped ${treeLines.length - snippetLimit} lines...\n`));
     } else {
       console.log(treeWithRoot);
     }
 
-    const structurePath = path.join(dirToPrint, 'structure.txt');
-    const projectStructurePath = path.join(dirToPrint, 'project_structure.txt');
-    const filePathToWrite = fs.existsSync(structurePath) ? projectStructurePath : structurePath;
-    const plainTree = buildTreeString(dirToPrint, '', { color: false });
-    const plainWithRoot = `${rootName}/\n${plainTree}`;
+    let writeJson: boolean | undefined;
+    if (argv.json) writeJson = true;
+    else if (argv.txt) writeJson = false;
+    else {
+      const response = await prompts({
+        type: "select",
+        name: "format",
+        message: "Choose output file format:",
+        choices: [
+          { title: "TXT (default)", value: false },
+          { title: "JSON", value: true },
+        ],
+        initial: 0,
+      });
+      writeJson = typeof response.format === "boolean" ? response.format : false;
+    }
 
-    fs.writeFileSync(filePathToWrite, plainWithRoot);
-
+    const filePath = writeTreeToFile(dirToPrint, { color: false, json: writeJson, rootName });
     console.log(kleur.green(`Project structure mapped and written.`));
-    console.log(kleur.green(`Check it out at: ${filePathToWrite}\n`));
+    console.log(kleur.green(`Check it out at: ${filePath}\n`));
     process.exit(0);
   }
 
+  if (argv.readme) {
+    const response = await prompts([
+      { type: 'text', name: 'projectName', message: 'Project name:', initial: path.basename(process.cwd()) },
+      { type: 'text', name: 'description', message: 'Project description:', initial: 'A project created with jirehgrp-CLI' },
+      { type: 'text', name: 'packageName', message: 'Package name:', initial: path.basename(process.cwd()) },
+      { type: 'text', name: 'usage', message: 'Usage command:', initial: 'npm run dev' },
+      { type: 'text', name: 'license', message: 'License:', initial: 'MIT' },
+    ]);
+
+    await writeReadme(process.cwd(), {
+      projectName: response.projectName,
+      description: response.description,
+      packageName: response.packageName,
+      usage: response.usage,
+      license: response.license,
+      includeGeneratedBy: true,
+    });
+
+    console.log(kleur.green(`✔️ README.md written to ${process.cwd()}`));
+    process.exit(0);
+  }
 
   const answers = await ask({
     name: argv.name,
@@ -127,7 +157,6 @@ async function handleDirConflict(dir: string): Promise<string | null> {
   });
 
   const dest = path.resolve(process.cwd(), argv.dir ?? answers.name);
-
   let targetDir = dest;
   if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
     if (!argv.yes) {
@@ -142,6 +171,7 @@ async function handleDirConflict(dir: string): Promise<string | null> {
     fs.mkdirSync(targetDir, { recursive: true });
   }
 
+
   const entry = registry[answers.subTemplateKey];
   const repoRef = argv.tag ? `${entry.repo.split("#")[0]}#${argv.tag}` : entry.repo;
 
@@ -149,38 +179,41 @@ async function handleDirConflict(dir: string): Promise<string | null> {
   try {
     await copyTemplate(repoRef, entry.subdir, targetDir);
     spin.succeed("Template copied");
+
+    await writeReadme(targetDir, {
+      projectName: answers.name,
+      description: `A project created with ${entry.label} template.`,
+    });
+
+    await finalizeProject(targetDir, answers.name, {
+      install: fs.existsSync(path.join(targetDir, "package.json")) ? !!answers.install : false,
+      git: !!answers.git,
+      pm: argv.pm as "npm" | "yarn" | "pnpm" | "bun" | undefined,
+    });
+
+    console.log(`\n${kleur.bold("Done!")} Created ${kleur.cyan(answers.name)} at ${kleur.gray(targetDir)}\n`);
+    console.log(kleur.bold("Next steps:"));
+    console.log(`  cd ${answers.name}`);
+
+    if (fs.existsSync(path.join(targetDir, "package.json"))) {
+      const pm = (argv.pm || "npm") as "npm" | "yarn" | "pnpm" | "bun";
+      const commands: Record<typeof pm, [string, string]> = {
+        npm: ["npm install", "npm run dev"],
+        yarn: ["yarn install", "yarn dev"],
+        pnpm: ["pnpm install", "pnpm dev"],
+        bun: ["bun install", "bun dev"],
+      };
+      const [installCmd, devCmd] = commands[pm] || commands.npm;
+      if (!answers.install) console.log(`  ${installCmd}`);
+      console.log(`  ${devCmd}\n`);
+    } else {
+      console.log(`  Open ${kleur.cyan("index.html")} in your browser.`);
+      console.log(`  Or serve locally:\n    - live-server\n    - python3 -m http.server\n`);
+    }
   } catch (e) {
     spin.fail("Failed to fetch template");
     console.error(e);
     process.exit(1);
-  }
-
-  await finalizeProject(targetDir, answers.name, {
-    install: fs.existsSync(path.join(targetDir, "package.json")) ? !!answers.install : false,
-    git: !!answers.git,
-    pm: argv.pm as "npm" | "yarn" | "pnpm" | "bun" | undefined,
-  });
-
-  console.log(`\n${kleur.bold("Done!")} Created ${kleur.cyan(answers.name)} at ${kleur.gray(targetDir)}\n`);
-  console.log(kleur.bold("Next steps:"));
-  console.log(`  cd ${answers.name}`);
-
-  if (fs.existsSync(path.join(targetDir, "package.json"))) {
-    const pm = (argv.pm || "npm") as "npm" | "yarn" | "pnpm" | "bun";
-    const commands: Record<typeof pm, [string, string]> = {
-      npm: ["npm install", "npm run dev"],
-      yarn: ["yarn install", "yarn dev"],
-      pnpm: ["pnpm install", "pnpm dev"],
-      bun: ["bun install", "bun dev"],
-    };
-
-    const [installCmd, devCmd] = commands[pm] || commands.npm;
-
-    if (!answers.install) console.log(`  ${installCmd}`);
-    console.log(`  ${devCmd}\n`);
-  } else {
-    console.log(`  Open ${kleur.cyan("index.html")} in your browser.`);
-    console.log(`  Or serve locally:\n    - live-server\n    - python3 -m http.server\n`);
   }
 
   process.exit(0);
