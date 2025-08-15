@@ -180,7 +180,7 @@ Built with:
 * [kleur](https://github.com/lukeed/kleur) – Terminal colors
 * [prompts](https://github.com/terkelg/prompts) – Interactive CLI
 
-Licensed under MIT © 2025 [JirehGroup](https://jirehgrp.com)
+Licensed under MIT © 2025 [jirehgrp](https://jirehgrp.com)
 
 ---
 
