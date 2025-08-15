@@ -1,6 +1,6 @@
 {
   "name": "jirehgrp",
-  "version": "0.0.3-alpha.0",
+  "version": "0.0.3",
   "description": "Scaffold frontend apps from Jireh templates (Next.js, React+Vite, Vanilla, etc.)",
   "bin": {
     "jirehgrp": "dist/index.js"
@@ -14,6 +14,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -w",
     "release": "standard-version",
+    "release:patch": "standard-version --release-as patch",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
     "release:alpha": "standard-version --prerelease alpha",
