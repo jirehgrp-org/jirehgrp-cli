@@ -27,11 +27,8 @@ Pick your favorite package manager:
 # npm
 npx jirehgrp@latest
 
-# yarn (classic)
-yarn create jirehgrp
-
 # yarn
-yarn dlx create jirehgrp
+yarn dlx jirehgrp
 
 # pnpm
 pnpm dlx jirehgrp
