@@ -1,6 +1,6 @@
 # jirehgrp-cli
 
-A fast, interactive **CLI tool** for scaffolding frontend projects from the [Jireh Group Templates](https://github.com/jirehgrp-org/jirehgrp-templates) repository.
+A fast, interactive **CLI tool** for scaffolding frontend projects from the [JirehGrp Templates](https://github.com/jirehgrp-org/jirehgrp-templates) repository.
 
 Supports **Next.js**, **React + Vite**, **Vue 3 + Vite**, **SvelteKit + Vite**, **Vanilla JS/TS**, and **Vanilla + Vite (JS/TS)** — all preconfigured with multilingual (🇪🇹 / 🇺🇸) and theme toggle support.
 
@@ -184,4 +184,4 @@ Licensed under MIT © 2025 [JirehGroup](https://jirehgrp.com)
 
 ---
 
-**Made with ❤️ by the [JirehGroup](https://jirehgrp.com) Team**
+**Made with ❤️ by the [JirehGrp](https://jirehgrp.com) Team**
