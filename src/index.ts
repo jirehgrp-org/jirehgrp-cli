@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 // src/index.ts
 
-import path from "node:path";
-import fs from "node:fs";
-import minimist from "minimist";
-import kleur from "kleur";
-import prompts from "prompts";
 import ora from "ora";
+import fs from "node:fs";
+import kleur from "kleur";
+import path from "node:path";
+import prompts from "prompts";
+import minimist from "minimist";
+import { execSync } from "node:child_process";
 import { ask } from "./prompts.js";
 import { registry } from "./registry.js";
-import { buildTreeString, writeTreeToFile } from "./tree.js"
+import { writeReadme } from "./writeReadme.js";
 import { copyTemplate } from "./fetchTemplate.js";
 import { finalizeProject } from "./postInstall.js";
-import { writeReadme } from "./writeReadme.js";
+import { buildTreeString, writeTreeToFile } from "./tree.js"
 
 const argv = minimist(process.argv.slice(2), {
   string: ["template", "name", "tag", "dir", "pm"],
@@ -171,7 +172,6 @@ async function handleDirConflict(dir: string): Promise<string | null> {
     fs.mkdirSync(targetDir, { recursive: true });
   }
 
-
   const entry = registry[answers.subTemplateKey];
   const repoRef = argv.tag ? `${entry.repo.split("#")[0]}#${argv.tag}` : entry.repo;
 
@@ -190,6 +190,43 @@ async function handleDirConflict(dir: string): Promise<string | null> {
       git: !!answers.git,
       pm: argv.pm as "npm" | "yarn" | "pnpm" | "bun" | undefined,
     });
+
+    if (!fs.existsSync(path.join(targetDir, ".git"))) {
+      const gitInitAnswer = await prompts({
+        type: "confirm",
+        name: "init",
+        message: "Git repository not found. Initialize git?",
+        initial: true,
+      });
+
+      if (gitInitAnswer.init) {
+        try {
+          execSync("git init", { cwd: targetDir, stdio: "inherit" });
+          console.log(kleur.green("✔️ Git repository initialized"));
+        } catch (err) {
+          console.error(kleur.red("Failed to initialize git:"), err);
+        }
+      }
+    }
+
+    const showTreeAnswer = await prompts({
+      type: "confirm",
+      name: "show",
+      message: "Do you want to display the project tree?",
+      initial: true,
+    });
+
+    // After finalizeProject() and git initialization
+    const treeFilePath = writeTreeToFile(targetDir, { color: false, json: false, rootName: getProjectName(targetDir) });
+    console.log(kleur.green(`✔️ Project structure saved to ${treeFilePath}`));
+
+
+    if (showTreeAnswer.show) {
+      const rootName = getProjectName(targetDir);
+      const tree = buildTreeString(targetDir, "", { color: true });
+      console.log(kleur.bold(`\nProject structure for: ${targetDir}\n`));
+      console.log(`${rootName}/\n${tree}`);
+    }
 
     console.log(`\n${kleur.bold("Done!")} Created ${kleur.cyan(answers.name)} at ${kleur.gray(targetDir)}\n`);
     console.log(kleur.bold("Next steps:"));
